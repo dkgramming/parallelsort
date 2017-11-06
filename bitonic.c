@@ -32,6 +32,13 @@ void to_bitonic_seq(int *array, int length) {
       }
 
       // Ascenging
+      for (int a = step/2; a < length; a += step) {
+        int b = a + pair_offset;
+        int inner_step = (r > 1) ? 1 : 2;
+        for (int i = 0; i < comparisons_per_step/2; i++) {
+          printf("ASC(%d, %d)\n", a+i*inner_step, b+i*inner_step);
+        }
+      }
     }
   }
 }
