@@ -77,31 +77,6 @@ void to_bitonic_seq(int *array, int length) {
 
         AD *= -1; // DESC <-> ASC
       }
-
-      // Descending
-      // for (int a = 0; a < length; a += step) {
-      //   int b = a + pair_offset;
-      //   int inner_step = (r > 1) ? 1 : 2;
-      //   for (int i = 0; i < comparisons_per_step/2; i++) {
-      //     int indexA = a+i*inner_step;
-      //     int indexB = b+i*inner_step;
-      //     printf("[%d\t-->\t%d]\n", array[indexA], array[indexB]);
-      //     desc_swap(array, indexA, indexB);
-      //   }
-      // }
-      //
-      // // Ascenging
-      // for (int a = step/2; a < length; a += step) {
-      //   int b = a + pair_offset;
-      //   int inner_step = (r > 1) ? 1 : 2;
-      //   for (int i = 0; i < comparisons_per_step/2; i++) {
-      //     int indexA = a+i*inner_step;
-      //     int indexB = b+i*inner_step;
-      //     printf("[%d\t<--\t%d]\n", array[indexA], array[indexB]);
-      //     asc_swap(array, indexA, indexB);
-      //   }
-      // }
-      // print_seq(array, length);
     }
   }
 }
