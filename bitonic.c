@@ -9,6 +9,37 @@
 #include <stdlib.h>
 #include <math.h>
 
+void swap(int *array, int indexA, int indexB) {
+  int temp = array[indexA];
+  array[indexA] = array[indexB];
+  array[indexB] = temp;
+}
+
+void desc_swap(int *array, int indexA, int indexB) {
+  printf("descending? %d -> %d", array[indexA], array[indexB]);
+  if (array[indexA] > array[indexB]) {
+    printf(" NO! Swapping...");
+    swap(array, indexA, indexB);
+  }
+  printf("\n");
+}
+
+void asc_swap(int *array, int indexA, int indexB) {
+  printf("descending? %d -> %d", array[indexA], array[indexB]);
+  if (array[indexA] < array[indexB]) {
+    printf(" NO! Swapping...");
+    swap(array, indexA, indexB);
+  }
+  printf("\n");
+}
+
+void print_seq(int *array, int length) {
+  for (int i=0; i < length; i++) {
+    printf("%d ", array[i]);
+  }
+  printf("\n");
+}
+
 void to_bitonic_seq(int *array, int length) {
   int num_stages = (int)(log2(length) - 1);
 
@@ -27,7 +58,10 @@ void to_bitonic_seq(int *array, int length) {
         int b = a + pair_offset;
         int inner_step = (r > 1) ? 1 : 2;
         for (int i = 0; i < comparisons_per_step/2; i++) {
-          printf("DESC(%d, %d)\n", a+i*inner_step, b+i*inner_step);
+          int indexA = a+i*inner_step;
+          int indexB = b+i*inner_step;
+          desc_swap(array, indexA, indexB);
+          printf("DESC(%d, %d)\n", indexA, indexB);
         }
       }
 
@@ -36,7 +70,10 @@ void to_bitonic_seq(int *array, int length) {
         int b = a + pair_offset;
         int inner_step = (r > 1) ? 1 : 2;
         for (int i = 0; i < comparisons_per_step/2; i++) {
-          printf("ASC(%d, %d)\n", a+i*inner_step, b+i*inner_step);
+          int indexA = a+i*inner_step;
+          int indexB = b+i*inner_step;
+          asc_swap(array, indexA, indexB);
+          printf("ASC(%d, %d)\n", indexA, indexB);
         }
       }
     }
@@ -46,7 +83,7 @@ void to_bitonic_seq(int *array, int length) {
 int main(int argc, char *argv[]) {
   /* Validate arguments */
   if (argc != 3) {
-    printf("Error: 1 argument expected.\n");
+    printf("Error: 2 argument expected.\n");
     printf("Usage: ./bitonic <input_file> <thread_count>\n");
     exit(1);
   }
@@ -68,7 +105,9 @@ int main(int argc, char *argv[]) {
     A[i] = e;
   }
 
+  print_seq(A, N);
   to_bitonic_seq(A, N);
+  print_seq(A, N);
 
   /* Close file */
   fclose(pFile);
