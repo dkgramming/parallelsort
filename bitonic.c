@@ -13,24 +13,19 @@ void swap(int *array, int indexA, int indexB) {
   int temp = array[indexA];
   array[indexA] = array[indexB];
   array[indexB] = temp;
+  // printf("swap(%d, %d)\n", array[indexA], array[indexB]);
 }
 
 void desc_swap(int *array, int indexA, int indexB) {
-  printf("descending? %d -> %d", array[indexA], array[indexB]);
   if (array[indexA] > array[indexB]) {
-    printf(" NO! Swapping...");
     swap(array, indexA, indexB);
   }
-  printf("\n");
 }
 
 void asc_swap(int *array, int indexA, int indexB) {
-  printf("descending? %d -> %d", array[indexA], array[indexB]);
   if (array[indexA] < array[indexB]) {
-    printf(" NO! Swapping...");
     swap(array, indexA, indexB);
   }
-  printf("\n");
 }
 
 void print_seq(int *array, int length) {
@@ -45,37 +40,68 @@ void to_bitonic_seq(int *array, int length) {
 
   // Stages
   for (int s = 1; s <= num_stages; s++) {
-    int step = (int)pow(2, s+1);
+    int step = (int)pow(2, s);
     int comparisons_per_step = step / 2;
 
     // Ranges?
     for (int r = s; r > 0; r--) {
+      printf("##################\n");
       printf("Stage %d\tRound %d\n", s, r);
+      printf("##################\n");
       int pair_offset = (int)pow(2, r-1);
 
-      // Descending
+      // Alternating
+      int AD = 1;
       for (int a = 0; a < length; a += step) {
         int b = a + pair_offset;
-        int inner_step = (r > 1) ? 1 : 2;
-        for (int i = 0; i < comparisons_per_step/2; i++) {
-          int indexA = a+i*inner_step;
-          int indexB = b+i*inner_step;
-          desc_swap(array, indexA, indexB);
-          printf("DESC(%d, %d)\n", indexA, indexB);
+        int coef = 1; //(r > 1) ? 1 : 2;
+        int offset = 0;
+        int d = 0; // kind of like the column index?
+
+        for (int c = 0; c < comparisons_per_step; c++) {
+          if ((d+1) > pair_offset) {
+            offset += pair_offset;
+            d = 0;
+          }
+          int indexA = a+c*coef+offset;
+          int indexB = b+c*coef+offset;
+          if (AD > 0) {
+            printf("\tDESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
+            desc_swap(array, indexA, indexB);
+          } else {
+            printf("\tASC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
+            asc_swap(array, indexA, indexB);
+          }
+          d++;
         }
+
+        AD *= -1; // DESC <-> ASC
       }
 
-      // Ascenging
-      for (int a = step/2; a < length; a += step) {
-        int b = a + pair_offset;
-        int inner_step = (r > 1) ? 1 : 2;
-        for (int i = 0; i < comparisons_per_step/2; i++) {
-          int indexA = a+i*inner_step;
-          int indexB = b+i*inner_step;
-          asc_swap(array, indexA, indexB);
-          printf("ASC(%d, %d)\n", indexA, indexB);
-        }
-      }
+      // Descending
+      // for (int a = 0; a < length; a += step) {
+      //   int b = a + pair_offset;
+      //   int inner_step = (r > 1) ? 1 : 2;
+      //   for (int i = 0; i < comparisons_per_step/2; i++) {
+      //     int indexA = a+i*inner_step;
+      //     int indexB = b+i*inner_step;
+      //     printf("[%d\t-->\t%d]\n", array[indexA], array[indexB]);
+      //     desc_swap(array, indexA, indexB);
+      //   }
+      // }
+      //
+      // // Ascenging
+      // for (int a = step/2; a < length; a += step) {
+      //   int b = a + pair_offset;
+      //   int inner_step = (r > 1) ? 1 : 2;
+      //   for (int i = 0; i < comparisons_per_step/2; i++) {
+      //     int indexA = a+i*inner_step;
+      //     int indexB = b+i*inner_step;
+      //     printf("[%d\t<--\t%d]\n", array[indexA], array[indexB]);
+      //     asc_swap(array, indexA, indexB);
+      //   }
+      // }
+      // print_seq(array, length);
     }
   }
 }
