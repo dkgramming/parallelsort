@@ -1,10 +1,10 @@
 /**
-* CSCI 251
-* Fall 2017
-* Project 2
-*
-* David Kisluk
-*/
+ * CSCI 251
+ * Fall 2017
+ * Project 2
+ *
+ * David Kisluk
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
