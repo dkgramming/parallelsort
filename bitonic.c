@@ -137,6 +137,9 @@ void bitonic_sort(int *array, int length, int thread_count) {
       }
     }
   }
+
+  free(thread);
+  free(arg);
 }
 
 int max_power_of_2(int n) {
