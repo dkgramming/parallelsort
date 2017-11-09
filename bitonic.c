@@ -35,7 +35,13 @@ void print_seq(int *array, int length) {
   printf("\n");
 }
 
+int thread_id(int task_id, int task_count, int thread_count) {
+  int tasks_per_thread = task_count / thread_count;
+  return task_id / tasks_per_thread;
+}
+
 void to_bitonic_seq(int *array, int length, int thread_count) {
+  int task_count = length / 2;
   int num_stages = (int)(log2(length) - 1);
   int rows_per_thread = length / thread_count;
 
@@ -67,8 +73,7 @@ void to_bitonic_seq(int *array, int length, int thread_count) {
           }
           int indexA = a+c*coef+offset;
           int indexB = b+c*coef+offset;
-          int pid = row / rows_per_thread;
-          printf("[P%d]\t", pid);
+          printf("[P%d]\t", thread_id(row, task_count, thread_count));
           if (AD > 0) {
             printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
             desc_swap(array, indexA, indexB);
