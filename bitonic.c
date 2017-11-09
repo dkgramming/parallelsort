@@ -191,6 +191,7 @@ int main(int argc, char *argv[]) {
 
   int requested_thread_count = atoi(argv[2]);
   int actual_thread_count = max_power_of_2(requested_thread_count);
+  actual_thread_count = (actual_thread_count > N/2) ? N/2 : actual_thread_count;
 
   print_seq(A, N);
   bitonic_sort(A, N, actual_thread_count);
