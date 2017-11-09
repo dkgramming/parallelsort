@@ -29,7 +29,6 @@ void swap(int *array, int indexA, int indexB) {
   int temp = array[indexA];
   array[indexA] = array[indexB];
   array[indexB] = temp;
-  // printf("swap(%d, %d)\n", array[indexA], array[indexB]);
 }
 
 void desc_swap(int *array, int indexA, int indexB) {
@@ -85,12 +84,9 @@ void * bitonic_worker(void *arg) {
       int indexB = b + c + offset;
 
       if (id == thread_id(row, task_count, thread_count)) {
-        printf("[P%d]\t", thread_id(row, task_count, thread_count));
         if (AD > 0 || s == num_stages) {
-          printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
           desc_swap(array, indexA, indexB);
         } else {
-          printf("ASC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
           asc_swap(array, indexA, indexB);
         }
       }
@@ -116,9 +112,6 @@ void bitonic_sort(int *array, int length, int thread_count) {
 
     // Ranges?
     for (int r = s; r > 0; r--) {
-      printf("##################\n");
-      printf("Stage %d\tRound %d\n", s, r);
-      printf("##################\n");
       int pair_offset = (int)pow(2, r-1);
 
       // Alternating
@@ -193,9 +186,7 @@ int main(int argc, char *argv[]) {
   int actual_thread_count = max_power_of_2(requested_thread_count);
   actual_thread_count = (actual_thread_count > N/2) ? N/2 : actual_thread_count;
 
-  print_seq(A, N);
   bitonic_sort(A, N, actual_thread_count);
-  print_seq(A, N);
 
   if (requested_thread_count != actual_thread_count) {
     printf("Note: %d threads were requested, but only %d were used.\n",
