@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <pthread.h>
+#include <assert.h>
 
 void swap(int *array, int indexA, int indexB) {
   int temp = array[indexA];
@@ -61,7 +62,6 @@ void bitonic_sort(int *array, int length, int thread_count) {
       printf("Stage %d\tRound %d\n", s, r);
       printf("##################\n");
       int pair_offset = (int)pow(2, r-1);
-      int row = 0;
 
       // Alternating
       int AD = 1;
@@ -77,6 +77,7 @@ void bitonic_sort(int *array, int length, int thread_count) {
           }
           int indexA = a + c + offset;
           int indexB = b + c + offset;
+          int row = a / 2 + c;
           printf("[P%d]\t", thread_id(row, task_count, thread_count));
           if (AD > 0 || s == num_stages) {
             printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
@@ -86,7 +87,6 @@ void bitonic_sort(int *array, int length, int thread_count) {
             asc_swap(array, indexA, indexB);
           }
           d++;
-          row++;
         }
 
         AD *= -1; // DESC <-> ASC
