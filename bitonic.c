@@ -35,8 +35,9 @@ void print_seq(int *array, int length) {
   printf("\n");
 }
 
-void to_bitonic_seq(int *array, int length) {
+void to_bitonic_seq(int *array, int length, int thread_count) {
   int num_stages = (int)(log2(length) - 1);
+  int rows_per_thread = length / thread_count;
 
   // Stages
   for (int s = 1; s <= num_stages; s++) {
@@ -49,6 +50,7 @@ void to_bitonic_seq(int *array, int length) {
       printf("Stage %d\tRound %d\n", s, r);
       printf("##################\n");
       int pair_offset = (int)pow(2, r-1);
+      int row = 0;
 
       // Alternating
       int AD = 1;
@@ -65,17 +67,58 @@ void to_bitonic_seq(int *array, int length) {
           }
           int indexA = a+c*coef+offset;
           int indexB = b+c*coef+offset;
+          int pid = row / rows_per_thread;
+          printf("[P%d]\t", pid);
           if (AD > 0) {
-            printf("\tDESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
+            printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
             desc_swap(array, indexA, indexB);
           } else {
-            printf("\tASC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
+            printf("ASC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
             asc_swap(array, indexA, indexB);
           }
           d++;
+          row++;
         }
 
         AD *= -1; // DESC <-> ASC
+      }
+    }
+  }
+}
+
+void bitonic_sort(int* array, int length, int thread_count) {
+  // ensure the array is a bitonic sequence before sorting
+  to_bitonic_seq(array, length, thread_count);
+
+  int s = (int)log2(length);
+  int step = (int)pow(2, s);
+  int comparisons_per_step = step / 2;
+
+  // Ranges?
+  for (int r = s; r > 0; r--) {
+    printf("##################\n");
+    printf("Stage %d\tRound %d\n", s, r);
+    printf("##################\n");
+    int pair_offset = (int)pow(2, r-1);
+    int row = 0;
+
+    for (int a = 0; a < length; a += step) {
+      int b = a + pair_offset;
+      int coef = 1; //(r > 1) ? 1 : 2;
+      int offset = 0;
+      int d = 0; // kind of like the column index?
+
+      for (int c = 0; c < comparisons_per_step; c++) {
+        if ((d+1) > pair_offset) {
+          offset += pair_offset;
+          d = 0;
+        }
+        int indexA = a+c*coef+offset;
+        int indexB = b+c*coef+offset;
+        printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
+        desc_swap(array, indexA, indexB);
+        d++;
+        row++;
       }
     }
   }
@@ -106,14 +149,14 @@ int main(int argc, char *argv[]) {
     A[i] = e;
   }
 
+  int numberOfThreads = atoi(argv[2]);
+
   print_seq(A, N);
-  to_bitonic_seq(A, N);
+  bitonic_sort(A, N, numberOfThreads);
   print_seq(A, N);
 
   /* Close file */
   fclose(pFile);
-
-  int numberOfThreads = atoi(argv[2]);
 
   free(A);
 
