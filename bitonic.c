@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <pthread.h>
 
 void swap(int *array, int indexA, int indexB) {
   int temp = array[indexA];
@@ -40,10 +41,14 @@ int thread_id(int task_id, int task_count, int thread_count) {
   return task_id / tasks_per_thread;
 }
 
-void to_bitonic_seq(int *array, int length, int thread_count) {
+void bitonic_sort(int *array, int length, int thread_count) {
   int task_count = length / 2;
-  int num_stages = (int)(log2(length) - 1);
+  int num_stages = (int)log2(length);
   int rows_per_thread = length / thread_count;
+
+  // Prepare the thread pool
+  // pthread_t *thread = (pthread_t *)malloc(thread_count * sizeof(pthread_t));
+  // threadData_t *arg = (threadData_t)malloc(thread_count * sizeof(threadData_t));
 
   // Stages
   for (int s = 1; s <= num_stages; s++) {
@@ -62,7 +67,6 @@ void to_bitonic_seq(int *array, int length, int thread_count) {
       int AD = 1;
       for (int a = 0; a < length; a += step) {
         int b = a + pair_offset;
-        int coef = 1; //(r > 1) ? 1 : 2;
         int offset = 0;
         int d = 0; // kind of like the column index?
 
@@ -71,10 +75,10 @@ void to_bitonic_seq(int *array, int length, int thread_count) {
             offset += pair_offset;
             d = 0;
           }
-          int indexA = a+c*coef+offset;
-          int indexB = b+c*coef+offset;
+          int indexA = a + c + offset;
+          int indexB = b + c + offset;
           printf("[P%d]\t", thread_id(row, task_count, thread_count));
-          if (AD > 0) {
+          if (AD > 0 || s == num_stages) {
             printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
             desc_swap(array, indexA, indexB);
           } else {
@@ -86,44 +90,6 @@ void to_bitonic_seq(int *array, int length, int thread_count) {
         }
 
         AD *= -1; // DESC <-> ASC
-      }
-    }
-  }
-}
-
-void bitonic_sort(int* array, int length, int thread_count) {
-  // ensure the array is a bitonic sequence before sorting
-  to_bitonic_seq(array, length, thread_count);
-
-  int s = (int)log2(length);
-  int step = (int)pow(2, s);
-  int comparisons_per_step = step / 2;
-
-  // Ranges?
-  for (int r = s; r > 0; r--) {
-    printf("##################\n");
-    printf("Stage %d\tRound %d\n", s, r);
-    printf("##################\n");
-    int pair_offset = (int)pow(2, r-1);
-    int row = 0;
-
-    for (int a = 0; a < length; a += step) {
-      int b = a + pair_offset;
-      int coef = 1; //(r > 1) ? 1 : 2;
-      int offset = 0;
-      int d = 0; // kind of like the column index?
-
-      for (int c = 0; c < comparisons_per_step; c++) {
-        if ((d+1) > pair_offset) {
-          offset += pair_offset;
-          d = 0;
-        }
-        int indexA = a+c*coef+offset;
-        int indexB = b+c*coef+offset;
-        printf("DESC\t%d\n\t\t%d\t%d\t%d\n", indexA, indexB, array[indexA], array[indexB]);
-        desc_swap(array, indexA, indexB);
-        d++;
-        row++;
       }
     }
   }
