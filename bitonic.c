@@ -71,14 +71,13 @@ void bitonic_sort(int *array, int length, int thread_count) {
         int d = 0; // kind of like the column index?
 
         for (int c = 0; c < comparisons_per_step; c++) {
+          int row = a / 2 + c;
           if (d == pair_offset) {
             offset += pair_offset;
             d = 0;
           }
-
           int indexA = a + c + offset;
           int indexB = b + c + offset;
-          int row = a / 2 + c;
 
           printf("[P%d]\t", thread_id(row, task_count, thread_count));
           if (AD > 0 || s == num_stages) {
