@@ -11,6 +11,9 @@
 #include <pthread.h>
 #include <assert.h>
 
+const int DESC = 1;
+const int ASC = -1;
+
 typedef struct {
   int id;
   int* array;
@@ -20,8 +23,8 @@ typedef struct {
   int comparisons_per_step;
   int task_count;
   int thread_count;
-  int AD;
-  int s;
+  int direction;
+  int stage;
   int num_stages;
 } threadData_t;
 
@@ -65,35 +68,35 @@ void * bitonic_worker(void *arg) {
   int comparisons_per_step  = td->comparisons_per_step;
   int task_count            = td->task_count;
   int thread_count          = td->thread_count;
-  int AD                    = td->AD;
-  int s                     = td->s;
+  int direction             = td->direction;
+  int stage                 = td->stage;
   int num_stages            = td->num_stages;
 
   for (int a = 0; a < length; a += step) {
     int b = a + pair_offset;
     int offset = 0;
-    int d = 0; // kind of like the column index?
+    int column = 0;
 
     for (int c = 0; c < comparisons_per_step; c++) {
       int row = a / 2 + c;
-      if (d == pair_offset) {
+      if (column == pair_offset) {
         offset += pair_offset;
-        d = 0;
+        column = 0;
       }
       int indexA = a + c + offset;
       int indexB = b + c + offset;
 
       if (id == thread_id(row, task_count, thread_count)) {
-        if (AD > 0 || s == num_stages) {
+        if (direction == DESC || stage == num_stages) {
           desc_swap(array, indexA, indexB);
-        } else {
+        } else if (direction == ASC) {
           asc_swap(array, indexA, indexB);
         }
       }
-      d++;
+      column++;
     }
 
-    AD *= -1; // DESC <-> ASC
+    direction *= -1; // DESC <-> ASC
   }
 }
 
@@ -106,34 +109,34 @@ void bitonic_sort(int *array, int length, int thread_count) {
   threadData_t *arg = (threadData_t *)malloc(thread_count * sizeof(threadData_t));
 
   // Stages
-  for (int s = 1; s <= num_stages; s++) {
-    int step = (int)pow(2, s);
+  for (int stage = 1; stage <= num_stages; stage++) {
+    int step = (int)pow(2, stage);
     int comparisons_per_step = step / 2;
 
     // Ranges?
-    for (int r = s; r > 0; r--) {
-      int pair_offset = (int)pow(2, r-1);
+    for (int range = stage; range > 0; range--) {
+      int pair_offset = (int)pow(2, range-1);
 
       // Alternating
-      int AD = 1;
+      int direction = DESC;
 
-      for (int x = 0; x < thread_count; ++x) {
-        arg[x].id                   = x;
-        arg[x].array                = array;
-        arg[x].length               = length;
-        arg[x].step                 = step;
-        arg[x].pair_offset          = pair_offset;
-        arg[x].comparisons_per_step = comparisons_per_step;
-        arg[x].task_count           = task_count;
-        arg[x].thread_count         = thread_count;
-        arg[x].AD                   = AD;
-        arg[x].s                    = s;
-        arg[x].num_stages           = num_stages;
+      for (int id = 0; id < thread_count; ++id) {
+        arg[id].id                   = id;
+        arg[id].array                = array;
+        arg[id].length               = length;
+        arg[id].step                 = step;
+        arg[id].pair_offset          = pair_offset;
+        arg[id].comparisons_per_step = comparisons_per_step;
+        arg[id].task_count           = task_count;
+        arg[id].thread_count         = thread_count;
+        arg[id].direction            = direction;
+        arg[id].stage                = stage;
+        arg[id].num_stages           = num_stages;
 
-        pthread_create(&thread[x], NULL, bitonic_worker, (void *)(arg+x));
+        pthread_create(&thread[id], NULL, bitonic_worker, (void *)(arg+id));
       }
-      for (int x = 0; x < thread_count; ++x) {
-        pthread_join(thread[x], NULL);
+      for (int id = 0; id < thread_count; ++id) {
+        pthread_join(thread[id], NULL);
       }
     }
   }
@@ -142,22 +145,20 @@ void bitonic_sort(int *array, int length, int thread_count) {
   free(arg);
 }
 
-int max_power_of_2(int n) {
-  int res = 1;
+int max_power_of_2(int max) {
+  int result = 1;
 
-  // Try all powers starting from 2^1
-  for (int i=0; i==i; i++) {
-    int curr = 1 << i;
+  // Try all powers of 2
+  for (int exponent = 0;; exponent++) {
+    // 2^exponent
+    int current = 1 << exponent;
 
-    // If current power is more than n, break
-    if (curr > n) {
-      break;
-    }
+    if (current > max) { break; }
 
-    res = curr;
+    result = current;
   }
 
-  return res;
+  return result;
 }
 
 int main(int argc, char *argv[]) {
@@ -173,23 +174,26 @@ int main(int argc, char *argv[]) {
   pFile = fopen(argv[1], "r");
 
   /* Parse array dimension */
-  int N;
-  fscanf(pFile, "%d", &N);
+  int input_size;
+  fscanf(pFile, "%d", &input_size);
 
   /* Parse array A */
-  int *A = malloc(sizeof(int[N]));
+  int *array = malloc(sizeof(int[input_size]));
 
-  int e;
-  for (int i=0; i<N; ++i) {
-    fscanf(pFile, "%d", &e);
-    A[i] = e;
+  int element;
+  for (int i=0; i<input_size; ++i) {
+    fscanf(pFile, "%d", &element);
+    array[i] = element;
   }
 
   int requested_thread_count = atoi(argv[2]);
   int actual_thread_count = max_power_of_2(requested_thread_count);
-  actual_thread_count = (actual_thread_count > N/2) ? N/2 : actual_thread_count;
+  actual_thread_count = (actual_thread_count > input_size/2) ?
+                          input_size/2 :
+                          actual_thread_count;
 
-  bitonic_sort(A, N, actual_thread_count);
+  bitonic_sort(array, input_size, actual_thread_count);
+  print_seq(array, input_size);
 
   if (requested_thread_count != actual_thread_count) {
     printf("Note: %d threads were requested, but only %d were used.\n",
@@ -199,7 +203,7 @@ int main(int argc, char *argv[]) {
   /* Close file */
   fclose(pFile);
 
-  free(A);
+  free(array);
 
   return 0;
 }
